@@ -169,6 +169,34 @@
   .reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
   .reveal.in{opacity:1;transform:none}
 
+  /* GALLERY */
+  .filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:32px}
+  .filters button{font-family:inherit;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:transparent;border:1px solid var(--line);padding:9px 16px;border-radius:100px;cursor:pointer;transition:all .2s}
+  .filters button:hover{color:var(--ink);border-color:var(--muted)}
+  .filters button.active{background:var(--accent);color:#0a0a0b;border-color:var(--accent)}
+  .masonry{column-count:3;column-gap:14px}
+  @media(max-width:820px){.masonry{column-count:2}}
+  @media(max-width:520px){.masonry{column-count:1}}
+  .gitem{break-inside:avoid;margin-bottom:14px;position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);cursor:pointer;background:var(--bg-2)}
+  .gitem img{width:100%;display:block;transition:transform .5s ease}
+  .gitem:hover img{transform:scale(1.05)}
+  .gitem .cap{position:absolute;left:0;right:0;bottom:0;padding:30px 14px 12px;background:linear-gradient(to top,rgba(0,0,0,.82),transparent);opacity:0;transition:opacity .3s}
+  .gitem:hover .cap{opacity:1}
+  .gitem .cap .k{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:17px;line-height:1}
+  .gitem .cap .c{font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-top:3px}
+  .lightbox{position:fixed;inset:0;z-index:100;background:rgba(5,5,6,.95);display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+  .lightbox.open{display:flex}
+  .lightbox img{max-width:92vw;max-height:84vh;object-fit:contain;border-radius:6px}
+  .lb-cap{position:absolute;bottom:22px;left:0;right:0;text-align:center;color:var(--muted);font-size:14px;padding:0 16px}
+  .lb-cap b{color:var(--ink);font-family:'Anton',sans-serif;font-weight:400;letter-spacing:.03em;font-size:18px}
+  .lb-cap .c{color:var(--accent);text-transform:uppercase;letter-spacing:.1em;font-size:12px;margin-left:8px}
+  .lb-close,.lb-nav{position:absolute;background:rgba(255,255,255,.08);border:1px solid var(--line);color:#fff;width:48px;height:48px;border-radius:50%;font-size:20px;cursor:pointer;display:grid;place-items:center;transition:background .2s,color .2s;z-index:2}
+  .lb-close:hover,.lb-nav:hover{background:var(--accent);color:#0a0a0b}
+  .lb-close{top:22px;right:22px}
+  .lb-nav.prev{left:22px;top:50%;transform:translateY(-50%)}
+  .lb-nav.next{right:22px;top:50%;transform:translateY(-50%)}
+  @media(max-width:520px){.lb-nav{width:42px;height:42px}.lb-close{top:14px;right:14px}.lb-nav.prev{left:10px}.lb-nav.next{right:10px}}
+
   @media(max-width:820px){
     .nav-links{display:none}
     .menu-toggle{display:block}
@@ -227,16 +255,11 @@
   <div class="wrap">
     <div class="section-head reveal">
       <span class="tag">Selected Work</span>
-      <h2 class="display">The Reel</h2>
-      <p>Real estate, events, commercial, construction, and travel — a few recent flights from the air.</p>
+      <h2 class="display">The Gallery</h2>
+      <p>Real estate, coastal, cities, nature, construction, commercial, and events. Filter by category, and tap any frame to enlarge.</p>
     </div>
-    <div class="grid">
-      <div class="tile big reveal"><img class="ph" src="DJI_0442.jpg" alt="Aerial view of a luxury hillside estate with pool" /><div class="badge">Real Estate</div><div class="label"><div class="k">Hillside Estate</div><div class="s">Luxury property tour</div></div></div>
-      <div class="tile small reveal"><img class="ph" src="DJI_0901.jpg" alt="Aerial view of tropical islands and lagoons" /><div class="badge">Tourism</div><div class="label"><div class="k">Island Paradise</div><div class="s">Coron, Philippines</div></div></div>
-      <div class="tile third reveal" style="min-height:300px"><img class="ph" src="DJI_20260107214948_0040_D_CTC.jpg" alt="Aerial night view of the Las Vegas Strip" /><div class="badge">Commercial</div><div class="label"><div class="k">After Dark</div><div class="s">The Strip, Las Vegas</div></div></div>
-      <div class="tile third reveal" style="min-height:300px"><img class="ph" src="DJI_0170.jpg" alt="Aerial view of an industrial construction site" /><div class="badge">Construction</div><div class="label"><div class="k">Site Progress</div><div class="s">Industrial flyover</div></div></div>
-      <div class="tile third reveal" style="min-height:300px"><img class="ph" src="DJI_20251121194125_0177_D_CLAYMINI4.jpg" alt="Aerial view of a large group gathering on a lawn at dusk" /><div class="badge">Events</div><div class="label"><div class="k">The Gathering</div><div class="s">Event coverage</div></div></div>
-    </div>
+    <div class="filters reveal" id="filters"></div>
+    <div class="masonry" id="gallery"></div>
   </div>
 </section>
 
@@ -327,7 +350,85 @@
   </div>
 </footer>
 
+<div class="lightbox" id="lightbox" aria-hidden="true">
+  <button class="lb-close" id="lbClose" aria-label="Close">✕</button>
+  <button class="lb-nav prev" id="lbPrev" aria-label="Previous">‹</button>
+  <img id="lbImg" src="" alt="" />
+  <button class="lb-nav next" id="lbNext" aria-label="Next">›</button>
+  <div class="lb-cap" id="lbCap"></div>
+</div>
+
 <script>
+  // ===== GALLERY =====
+  var PHOTOS=[
+    {f:"DJI_0442.jpg",c:"Real Estate",t:"Hillside Estate"},
+    {f:"DJI_0559.jpg",c:"Real Estate",t:"Vineyard Villa"},
+    {f:"DJI_0208.jpg",c:"Real Estate",t:"Manor House"},
+    {f:"DJI_20260619105557_0262_D.jpg",c:"Real Estate",t:"Canyon Retreat"},
+    {f:"DJI_0644.jpg",c:"Coastal",t:"Shorebreak"},
+    {f:"DJI_0700.jpg",c:"Coastal",t:"Beach Club"},
+    {f:"DJI_0018(2).jpg",c:"Coastal",t:"Coastal Resort"},
+    {f:"DJI_0396.jpg",c:"Coastal",t:"Where Forest Meets Sea"},
+    {f:"DJI_20260602193339_0204_D.jpg",c:"Coastal",t:"Lakefront"},
+    {f:"DJI_0296.jpg",c:"Coastal",t:"Pier & Tower"},
+    {f:"DJI_0385.jpg",c:"Coastal",t:"Na Pali Coast"},
+    {f:"DJI_0901.jpg",c:"Coastal",t:"Island Lagoons"},
+    {f:"DJI_0077.jpg",c:"Cityscapes",t:"Barcelona, Golden Hour"},
+    {f:"DJI_0082.jpg",c:"Cityscapes",t:"Barcelona Grid"},
+    {f:"DJI_0257.jpg",c:"Cityscapes",t:"Toronto in Winter"},
+    {f:"DJI_20260107214948_0040_D_CTC.jpg",c:"Cityscapes",t:"The Strip"},
+    {f:"DJI_0070(1).jpg",c:"Cityscapes",t:"Prague"},
+    {f:"DJI_0050c.jpg",c:"Cityscapes",t:"Downtown SF"},
+    {f:"IMG_6772.jpg",c:"Cityscapes",t:"Mexico City"},
+    {f:"dji_fly_20251130_183906_0371_1764539771836_photo.jpg",c:"Cityscapes",t:"La Bombonera"},
+    {f:"DJI_0231.jpg",c:"Nature",t:"Castle Mountain"},
+    {f:"DJI_0088.jpg",c:"Nature",t:"Blue Glacier"},
+    {f:"PANO0005.jpg",c:"Nature",t:"Horseshoe Falls"},
+    {f:"IMG_1782.jpg",c:"Nature",t:"McWay Falls"},
+    {f:"DJI_20260518044307_0142_D.jpg",c:"Nature",t:"Volcan de Fuego"},
+    {f:"DJI_20260411162758_0384_D.jpg",c:"Nature",t:"Pacaya Crater"},
+    {f:"IMG_1795.jpg",c:"Nature",t:"Bixby Bridge"},
+    {f:"DJI_0170.jpg",c:"Construction",t:"Industrial Plant"},
+    {f:"DJI_0210.jpg",c:"Construction",t:"Road Works"},
+    {f:"DJI_0220.jpg",c:"Construction",t:"New Build"},
+    {f:"DJI_0042(2).jpg",c:"Construction",t:"Marine Crane"},
+    {f:"DJI_20260320161257_0264_D.jpg",c:"Commercial",t:"Supercar Lineup"},
+    {f:"DJI_0837.jpg",c:"Commercial",t:"Auto Showroom"},
+    {f:"DJI_0137.jpg",c:"Commercial",t:"Rivian Off-Road"},
+    {f:"DJI_20251121194125_0177_D_CLAYMINI4.jpg",c:"Events",t:"The Gathering"},
+    {f:"DJI_20251122194814_0199_D_CLAYMINI4.jpg",c:"Events",t:"Vineyard Wedding"}
+  ];
+  var CATS=["All","Real Estate","Coastal","Cityscapes","Nature","Construction","Commercial","Events"];
+  var gEl=document.getElementById("gallery"),fEl=document.getElementById("filters");
+  var current="All",visible=[];
+  CATS.forEach(function(cat,i){var b=document.createElement("button");b.textContent=cat;if(i===0)b.className="active";b.onclick=function(){current=cat;[].forEach.call(fEl.children,function(x){x.classList.remove("active")});b.classList.add("active");render();};fEl.appendChild(b);});
+  function render(){
+    gEl.innerHTML="";visible=[];
+    PHOTOS.forEach(function(p){
+      if(current!=="All"&&p.c!==current)return;
+      var idx=visible.length;visible.push(p);
+      var d=document.createElement("div");d.className="gitem";
+      var im=new Image();im.loading="lazy";im.src=p.f;im.alt=p.t+" — aerial drone photography";
+      var cap=document.createElement("div");cap.className="cap";
+      cap.innerHTML='<div class="k">'+p.t+'</div><div class="c">'+p.c+'</div>';
+      d.appendChild(im);d.appendChild(cap);
+      d.onclick=function(){openLB(idx);};
+      gEl.appendChild(d);
+    });
+  }
+  // lightbox
+  var lb=document.getElementById("lightbox"),lbImg=document.getElementById("lbImg"),lbCap=document.getElementById("lbCap"),lbI=0;
+  function showLB(){var p=visible[lbI];lbImg.src=p.f;lbImg.alt=p.t;lbCap.innerHTML='<b>'+p.t+'</b><span class="c">'+p.c+'</span>';}
+  function openLB(i){lbI=i;showLB();lb.classList.add("open");document.body.style.overflow="hidden";}
+  function closeLB(){lb.classList.remove("open");document.body.style.overflow="";}
+  function nav(d){lbI=(lbI+d+visible.length)%visible.length;showLB();}
+  document.getElementById("lbClose").onclick=closeLB;
+  document.getElementById("lbPrev").onclick=function(e){e.stopPropagation();nav(-1);};
+  document.getElementById("lbNext").onclick=function(e){e.stopPropagation();nav(1);};
+  lb.onclick=function(e){if(e.target===lb)closeLB();};
+  document.addEventListener("keydown",function(e){if(!lb.classList.contains("open"))return;if(e.key==="Escape")closeLB();if(e.key==="ArrowLeft")nav(-1);if(e.key==="ArrowRight")nav(1);});
+  render();
+
   // nav scroll state
   const header=document.querySelector('header');
   addEventListener('scroll',()=>header.classList.toggle('scrolled',scrollY>20));
