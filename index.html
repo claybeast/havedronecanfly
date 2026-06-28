@@ -65,7 +65,7 @@
       linear-gradient(160deg,#0b0e14,#0a0a0b 60%);
   }
   .grid-lines{position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:64px 64px;mask-image:radial-gradient(circle at 50% 40%,#000,transparent 75%);opacity:.5}
-  .hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,10,11,.25),rgba(10,10,11,.55) 60%,var(--bg));z-index:1}
+  .hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,10,11,.5),rgba(10,10,11,.32) 38%,rgba(10,10,11,.72) 100%),linear-gradient(to right,rgba(10,10,11,.55),transparent 72%);z-index:1}
   .hero-inner{position:relative;z-index:2;width:100%}
   .eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:22px}
   .eyebrow::before{content:"";width:30px;height:1px;background:var(--accent)}
@@ -167,6 +167,12 @@
   .socials a:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-3px)}
   .copy{color:var(--muted);font-size:13px;margin-top:26px;border-top:1px solid var(--line);padding-top:20px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
 
+  /* show-all + mobile CTA */
+  #galleryMore{text-align:center;margin-top:22px}
+  .more-btn{background:transparent;border:1px solid var(--line);color:var(--ink);font-family:inherit;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.04em;padding:14px 28px;border-radius:100px;cursor:pointer;transition:all .2s}
+  .more-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .mobile-cta{display:none;position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:60;background:var(--accent);color:#0a0a0b;font-weight:800;font-size:14px;letter-spacing:.03em;text-transform:uppercase;padding:14px 26px;border-radius:100px;box-shadow:0 10px 30px rgba(0,0,0,.5);align-items:center;gap:8px;white-space:nowrap}
+
   /* reveal anim */
   .reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
   .reveal.in{opacity:1;transform:none}
@@ -227,7 +233,7 @@
     <!-- SWAP: replace the fallback below with your reel.
          For a video file:  <video autoplay muted loop playsinline poster="poster.jpg"><source src="reel.mp4" type="video/mp4"></video>
          For YouTube/Vimeo:  paste an <iframe> embed and set it to cover. -->
-    <img src="DJI_0077.jpg" alt="Aerial drone view of Barcelona and the Sagrada Familia at dusk" />
+    <img src="DJI_0048c.jpg" alt="Aerial drone view of San Francisco's Salesforce Tower with the bay behind" />
   </div>
   <div class="hero-overlay"></div>
   <div class="wrap hero-inner">
@@ -262,6 +268,7 @@
     </div>
     <div class="filters reveal" id="filters"></div>
     <div class="masonry" id="gallery"></div>
+    <div id="galleryMore"></div>
   </div>
 </section>
 
@@ -356,6 +363,8 @@
   </div>
 </footer>
 
+<a href="#contact" class="mobile-cta" id="mobileCta">Book a Shoot →</a>
+
 <div class="lightbox" id="lightbox" aria-hidden="true">
   <button class="lb-close" id="lbClose" aria-label="Close">✕</button>
   <button class="lb-nav prev" id="lbPrev" aria-label="Previous">‹</button>
@@ -415,23 +424,40 @@
     {f:"DJI_20251122194814_0199_D_CLAYMINI4.jpg",c:"Events",t:"Vineyard Wedding"}
   ];
   var CATS=["All","Real Estate","Coastal","Cityscapes","Nature","Construction","Commercial","Events"];
-  var gEl=document.getElementById("gallery"),fEl=document.getElementById("filters");
-  var current="All",visible=[];
-  CATS.forEach(function(cat,i){var b=document.createElement("button");b.textContent=cat;if(i===0)b.className="active";b.onclick=function(){current=cat;[].forEach.call(fEl.children,function(x){x.classList.remove("active")});b.classList.add("active");render();};fEl.appendChild(b);});
+  var gEl=document.getElementById("gallery"),fEl=document.getElementById("filters"),moreEl=document.getElementById("galleryMore");
+  var current="All",visible=[],expanded=false,MOBILE_LIMIT=9;
+  CATS.forEach(function(cat,i){var b=document.createElement("button");b.textContent=cat;if(i===0)b.className="active";b.onclick=function(){current=cat;expanded=false;[].forEach.call(fEl.children,function(x){x.classList.remove("active")});b.classList.add("active");render();};fEl.appendChild(b);});
   function render(){
-    gEl.innerHTML="";visible=[];
-    PHOTOS.forEach(function(p){
-      if(current!=="All"&&p.c!==current)return;
-      var idx=visible.length;visible.push(p);
+    gEl.innerHTML="";
+    visible=PHOTOS.filter(function(p){return current==="All"||p.c===current;});
+    var limit=(window.innerWidth<=820&&!expanded)?MOBILE_LIMIT:visible.length;
+    visible.forEach(function(p,i){
+      if(i>=limit)return;
       var d=document.createElement("div");d.className="gitem";
       var im=new Image();im.loading="lazy";im.src=p.f;im.alt=p.t+" — aerial drone photography";
       var cap=document.createElement("div");cap.className="cap";
       cap.innerHTML='<div class="k">'+p.t+'</div><div class="c">'+p.c+'</div>';
       d.appendChild(im);d.appendChild(cap);
-      d.onclick=function(){openLB(idx);};
+      d.onclick=function(){openLB(i);};
       gEl.appendChild(d);
     });
+    moreEl.innerHTML="";
+    if(window.innerWidth<=820&&!expanded&&visible.length>limit){
+      var mb=document.createElement("button");mb.className="more-btn";mb.textContent="Show all "+visible.length+" photos";
+      mb.onclick=function(){expanded=true;render();};
+      moreEl.appendChild(mb);
+    }
   }
+  addEventListener("resize",render);
+  var cta=document.getElementById("mobileCta");
+  function ctaToggle(){
+    if(window.innerWidth>820){cta.style.display="none";return;}
+    var c=document.getElementById("contact");
+    var past=window.scrollY>window.innerHeight*0.6;
+    var near=c.getBoundingClientRect().top<window.innerHeight*0.85;
+    cta.style.display=(past&&!near)?"inline-flex":"none";
+  }
+  addEventListener("scroll",ctaToggle);ctaToggle();
   // lightbox
   var lb=document.getElementById("lightbox"),lbImg=document.getElementById("lbImg"),lbCap=document.getElementById("lbCap"),lbI=0;
   function showLB(){var p=visible[lbI];lbImg.src=p.f;lbImg.alt=p.t;lbCap.innerHTML='<b>'+p.t+'</b><span class="c">'+p.c+'</span>';}
