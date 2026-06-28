@@ -327,7 +327,7 @@
       </div>
       <div class="field"><label for="msg">Details</label><textarea id="msg" name="msg" placeholder="Location, date, what you need..."></textarea></div>
       <button type="submit" class="btn">Send Request →</button>
-      <p class="form-note">Or email <a href="mailto:claycard18@gmail.com" style="color:var(--accent)">claycard18@gmail.com</a> directly.</p>
+      <p class="form-note" id="formNote">Or email <a href="mailto:claycard18@gmail.com" style="color:var(--accent)">claycard18@gmail.com</a> directly.</p>
     </form>
   </div>
 </section>
@@ -377,6 +377,7 @@
     {f:"dji_fly_20251228_130352_0430_1766945763230_photo.jpg",c:"Coastal",t:"Turquoise Bay"},
     {f:"DJI_20251229132537_0480_D_CLAYMINI4.jpg",c:"Coastal",t:"Isla Mujeres"},
     {f:"DJI_20260209143745_0112_D.jpg",c:"Coastal",t:"Sea Fort"},
+    {f:"DJI_20251227155604_0384_D_CLAYMINI4.jpg",c:"Coastal",t:"Cancun Coastline"},
     {f:"DJI_0077.jpg",c:"Cityscapes",t:"Barcelona, Golden Hour"},
     {f:"DJI_0082.jpg",c:"Cityscapes",t:"Barcelona Grid"},
     {f:"DJI_0257.jpg",c:"Cityscapes",t:"Toronto in Winter"},
@@ -388,6 +389,8 @@
     {f:"DJI_0504.jpg",c:"Cityscapes",t:"Osaka Castle"},
     {f:"DJI_0283.jpg",c:"Cityscapes",t:"Montreal at Dusk"},
     {f:"DJI_20251120112054_0117_D_CLAYMINI4.jpg",c:"Cityscapes",t:"Santiago"},
+    {f:"DJI_0633.jpg",c:"Cityscapes",t:"Saigon Nights"},
+    {f:"DJI_20260516104955_0059_D.jpg",c:"Cityscapes",t:"Market Day"},
     {f:"DJI_0231.jpg",c:"Nature",t:"Castle Mountain"},
     {f:"DJI_0088.jpg",c:"Nature",t:"Blue Glacier"},
     {f:"PANO0005.jpg",c:"Nature",t:"Horseshoe Falls"},
@@ -451,9 +454,23 @@
   // form (placeholder: opens email client with prefilled body until a backend/Formspree is wired)
   function submitForm(e){
     e.preventDefault();
-    const f=e.target;
-    const body=encodeURIComponent(`Name: ${f.name.value}\nEmail: ${f.email.value}\nProject: ${f.type.value}\n\n${f.msg.value}`);
-    window.location.href=`mailto:claycard18@gmail.com?subject=${encodeURIComponent('New aerial shoot request — '+f.name.value)}&body=${body}`;
+    var f=e.target, btn=f.querySelector('button[type=submit]'), note=document.getElementById('formNote');
+    btn.disabled=true; btn.textContent='Sending…';
+    fetch('https://formsubmit.co/ajax/claycard18@gmail.com',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({
+        Name:f.name.value, Email:f.email.value, 'Project type':f.type.value, Details:f.msg.value,
+        _subject:'New aerial shoot request — '+f.name.value, _template:'table', _captcha:'false'
+      })
+    }).then(function(r){return r.json();}).then(function(){
+      f.reset(); btn.disabled=false; btn.textContent='Send Request →';
+      note.innerHTML='Thanks — your request was sent. We’ll get back to you shortly.';
+      note.style.color='var(--accent)';
+    }).catch(function(){
+      btn.disabled=false; btn.textContent='Send Request →';
+      note.innerHTML='Hmm, that didn’t go through — please email <a href="mailto:claycard18@gmail.com" style="color:var(--accent)">claycard18@gmail.com</a> directly.';
+    });
     return false;
   }
 </script>
